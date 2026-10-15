@@ -11,7 +11,7 @@ export const MODEL_ALIAS = "zennai";
 
 export function getPlanConfig() {
   return {
-    dailyRequests: int("FREE_DAILY_REQUESTS", 20),
+    dailyRequests: int("FREE_DAILY_REQUESTS", 200),
     userPerMinute: int("FREE_USER_PER_MINUTE", 6),
     keyPerMinute: int("FREE_KEY_PER_MINUTE", 6),
     maxInputChars: int("MAX_INPUT_CHARS", 16000),
