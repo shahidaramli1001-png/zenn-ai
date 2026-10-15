@@ -25,12 +25,15 @@ async function getServerEntry(): Promise<ServerEntry> {
 function applyCloudflareBindings(env: unknown): void {
   if (!env || typeof env !== "object") return;
 
-  const runtimeProcess = (
-    globalThis as typeof globalThis & { process?: RuntimeProcess }
-  ).process;
+  const root = globalThis as typeof globalThis & {
+    process?: RuntimeProcess;
+  };
 
-  const processEnv = runtimeProcess?.env;
-  if (!processEnv) return;
+  const runtimeProcess =
+    root.process ?? (root.process = { env: {} });
+
+  const processEnv =
+    runtimeProcess.env ?? (runtimeProcess.env = {});
 
   const bindings = env as Record<string, unknown>;
 
@@ -46,7 +49,7 @@ function applyCloudflareBindings(env: unknown): void {
   ]) {
     const value = bindings[name];
 
-    if (typeof value === "string" && value.length > 0 && !processEnv[name]) {
+    if (typeof value === "string" && value.length > 0) {
       processEnv[name] = value;
     }
   }
