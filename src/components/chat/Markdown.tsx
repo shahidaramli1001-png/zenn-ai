@@ -9,6 +9,19 @@ import {
   LoaderCircle,
   CircleX,
   Clock3,
+  Brain,
+  ListChecks,
+  Search,
+  BookOpen,
+  FileText,
+  Code2,
+  ShieldCheck,
+  FlaskConical,
+  CheckCheck,
+  Database,
+  Globe,
+  Wrench,
+  Sparkles,
 } from "lucide-react";
 
 function textOf(node: ReactNode): string {
@@ -91,26 +104,83 @@ export function CodeFrame({
 }
 
 const STATUS = {
-  DONE: {
-    label: "Selesai",
-    Icon: Check,
-    color: "text-emerald-600 dark:text-emerald-400",
-    surface:
-      "border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-400/10",
+  ANALYZING: {
+    label: "Menganalisis permintaan",
+    Icon: Brain,
+    color: "text-sky-600 dark:text-sky-400",
+    surface: "border-sky-500/40 bg-sky-500/10",
+  },
+  PLANNING: {
+    label: "Merancang langkah",
+    Icon: ListChecks,
+    color: "text-violet-600 dark:text-violet-400",
+    surface: "border-violet-500/40 bg-violet-500/10",
+  },
+  SEARCHING: {
+    label: "Mencari maklumat",
+    Icon: Search,
+    color: "text-cyan-600 dark:text-cyan-400",
+    surface: "border-cyan-500/40 bg-cyan-500/10",
+  },
+  READING: {
+    label: "Membaca dan memahami",
+    Icon: BookOpen,
+    color: "text-indigo-600 dark:text-indigo-400",
+    surface: "border-indigo-500/40 bg-indigo-500/10",
+  },
+  WRITING: {
+    label: "Menulis kandungan",
+    Icon: FileText,
+    color: "text-blue-600 dark:text-blue-400",
+    surface: "border-blue-500/40 bg-blue-500/10",
+  },
+  CODING: {
+    label: "Membangunkan kod",
+    Icon: Code2,
+    color: "text-blue-600 dark:text-blue-400",
+    surface: "border-blue-500/40 bg-blue-500/10",
+  },
+  DATABASE: {
+    label: "Mengurus pangkalan data",
+    Icon: Database,
+    color: "text-cyan-600 dark:text-cyan-400",
+    surface: "border-cyan-500/40 bg-cyan-500/10",
+  },
+  CONNECTING: {
+    label: "Menyambungkan perkhidmatan",
+    Icon: Globe,
+    color: "text-sky-600 dark:text-sky-400",
+    surface: "border-sky-500/40 bg-sky-500/10",
+  },
+  FIXING: {
+    label: "Membaiki masalah",
+    Icon: Wrench,
+    color: "text-orange-600 dark:text-orange-400",
+    surface: "border-orange-500/40 bg-orange-500/10",
+  },
+  GENERATING: {
+    label: "Menjana hasil",
+    Icon: Sparkles,
+    color: "text-fuchsia-600 dark:text-fuchsia-400",
+    surface: "border-fuchsia-500/40 bg-fuchsia-500/10",
+  },
+  REVIEWING: {
+    label: "Menyemak hasil",
+    Icon: ShieldCheck,
+    color: "text-amber-600 dark:text-amber-300",
+    surface: "border-amber-500/40 bg-amber-500/10",
+  },
+  TESTING: {
+    label: "Menjalankan ujian",
+    Icon: FlaskConical,
+    color: "text-orange-600 dark:text-orange-400",
+    surface: "border-orange-500/40 bg-orange-500/10",
   },
   IN_PROGRESS: {
     label: "Sedang berjalan",
     Icon: LoaderCircle,
     color: "text-amber-600 dark:text-amber-300",
-    surface:
-      "border-amber-500/40 bg-amber-500/10 dark:bg-amber-400/10",
-  },
-  ERROR: {
-    label: "Ralat",
-    Icon: CircleX,
-    color: "text-red-600 dark:text-red-400",
-    surface:
-      "border-red-500/40 bg-red-500/10 dark:bg-red-400/10",
+    surface: "border-amber-500/40 bg-amber-500/10",
   },
   PENDING: {
     label: "Menunggu",
@@ -118,13 +188,33 @@ const STATUS = {
     color: "text-muted-foreground",
     surface: "border-border/70 bg-muted/40",
   },
+  DONE: {
+    label: "Selesai",
+    Icon: Check,
+    color: "text-emerald-600 dark:text-emerald-400",
+    surface: "border-emerald-500/40 bg-emerald-500/10",
+  },
+  COMPLETED: {
+    label: "Semua langkah selesai",
+    Icon: CheckCheck,
+    color: "text-emerald-600 dark:text-emerald-400",
+    surface: "border-emerald-500/40 bg-emerald-500/10",
+  },
+  ERROR: {
+    label: "Ralat",
+    Icon: CircleX,
+    color: "text-red-600 dark:text-red-400",
+    surface: "border-red-500/40 bg-red-500/10",
+  },
 } as const;
+
+type StatusType = keyof typeof STATUS;
 
 function TaskStatus({
   status,
   children,
 }: {
-  status: keyof typeof STATUS;
+  status: StatusType;
   children: ReactNode;
 }) {
   const item = STATUS[status];
@@ -148,21 +238,20 @@ function TaskStatus({
   );
 }
 
-/**
- * Normalize status formats produced by the AI.
- *
- * Examples:
- * DONEDONE - Database connected
- * ERRORERROR - API request failed
- * DONE - Database connected
- * - [DONE] Database connected
- */
+const STATUS_PATTERN =
+  "ANALYZING|PLANNING|SEARCHING|READING|WRITING|CODING|DATABASE|CONNECTING|FIXING|GENERATING|REVIEWING|TESTING|IN_PROGRESS|PENDING|COMPLETED|DONE|ERROR";
+
 function normalizeStatusLines(content: string): string {
   return content
     .split("\n")
     .map((line) => {
       const repeated = line.match(
-        /^\s*(?:[-*+]\s*)?(DONE|IN_PROGRESS|ERROR|PENDING)\1\s*(?:[-:—]\s*|\s+)(.+)$/i
+        new RegExp(
+          "^\\s*(?:[-*+]\\s*)?(" +
+            STATUS_PATTERN +
+            ")\\1\\s*(?:[-:—]\\s*|\\s+)(.+)$",
+          "i"
+        )
       );
 
       if (repeated) {
@@ -170,7 +259,12 @@ function normalizeStatusLines(content: string): string {
       }
 
       const plain = line.match(
-        /^\s*(?:[-*+]\s*)?(DONE|IN_PROGRESS|ERROR|PENDING)\s*[-:—]\s*(.+)$/i
+        new RegExp(
+          "^\\s*(?:[-*+]\\s*)?(" +
+            STATUS_PATTERN +
+            ")\\s*[-:—]\\s*(.+)$",
+          "i"
+        )
       );
 
       if (plain) {
@@ -189,15 +283,16 @@ function StatusListItem({
 }) {
   const fullText = textOf(children);
 
-  const match = /^\s*\[(DONE|IN_PROGRESS|ERROR|PENDING)\]\s*/i.exec(
-    fullText
-  );
+  const match = new RegExp(
+    "^\\s*\\[(" + STATUS_PATTERN + ")\\]\\s*",
+    "i"
+  ).exec(fullText);
 
   if (!match) {
     return <li className="my-1 pl-1">{children}</li>;
   }
 
-  const status = match[1].toUpperCase() as keyof typeof STATUS;
+  const status = match[1].toUpperCase() as StatusType;
   const cleaned = fullText.slice(match[0].length);
 
   return (
