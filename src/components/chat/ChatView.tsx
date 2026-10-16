@@ -281,14 +281,13 @@ export function ChatView({ routeConversationId }: { routeConversationId?: string
                   </div>
                   <div className="min-w-0 flex-1">
                     {m.status === "streaming" && !m.content ? (
-                      <div className="flex h-7 items-center gap-1" aria-label="ZennAI is thinking">
-                        <span className="zenn-dot h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-                        <span className="zenn-dot h-1.5 w-1.5 rounded-full bg-muted-foreground [animation-delay:150ms]" />
-                        <span className="zenn-dot h-1.5 w-1.5 rounded-full bg-muted-foreground [animation-delay:300ms]" />
-                      </div>
-                    ) : (
-                      m.content && <Markdown content={m.content} />
-                    )}
+  <div className="flex items-center gap-2 rounded-xl border border-sky-500/30 bg-sky-500/5 px-3 py-3 text-sm text-muted-foreground">
+    <Loader2 className="h-4 w-4 animate-spin text-sky-500" />
+    <span>ZennAI sedang menganalisis permintaan...</span>
+  </div>
+) : (
+  m.content && <Markdown content={m.content} />
+)}
                     {(m.status === "error" || m.status === "incomplete") && (
                       <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                         <AlertCircle className="h-4 w-4 text-destructive" />
