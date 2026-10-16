@@ -127,31 +127,84 @@ export const Markdown = memo(function Markdown({ content }: { content: string })
 
   return (
     <div className="zenn-prose min-w-0 break-words text-[15px] leading-7">
-      <ReactMarkdown
+            <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[[rehypeHighlight, { detect: true, ignoreMissing: true }]]}
+        rehypePlugins={[
+          [rehypeHighlight, { detect: true, ignoreMissing: true }],
+        ]}
         skipHtml
         components={{
-          a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer nofollow">{children}</a>,
-          table: ({ children }) => <div className="my-4 w-full overflow-x-auto rounded-xl border border-border/70"><table className="w-full min-w-max border-collapse text-sm">{children}</table></div>,
-          thead: ({ children }) => <thead className="bg-muted/70">{children}</thead>,
-          th: ({ children }) => <th className="border-b border-border/70 px-4 py-3 text-left font-semibold">{children}</th>,
-          td: ({ children }) => <td className="border-b border-border/50 px-4 py-3 align-top">{children}</td>,
+          a: ({ href, children }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+            >
+              {children}
+            </a>
+          ),
+          table: ({ children }) => (
+            <div className="my-4 w-full overflow-x-auto rounded-xl border border-border/70">
+              <table className="w-full min-w-max border-collapse text-sm">
+                {children}
+              </table>
+            </div>
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-muted/70">{children}</thead>
+          ),
+          th: ({ children }) => (
+            <th className="border-b border-border/70 px-4 py-3 text-left font-semibold">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="border-b border-border/50 px-4 py-3 align-top">
+              {children}
+            </td>
+          ),
           li: ({ children }) => <StatusListItem>{children}</StatusListItem>,
-          input: ({ type, checked }) => type === "checkbox" ? <input type="checkbox" checked={Boolean(checked)} readOnly aria-label="Task status" className="mr-2 h-4 w-4 accent-emerald-500" /> : null,
+          input: ({ type, checked }) =>
+            type === "checkbox" ? (
+              <input
+                type="checkbox"
+                checked={Boolean(checked)}
+                readOnly
+                aria-label="Task status"
+                className="mr-2 h-4 w-4 accent-emerald-500"
+              />
+            ) : null,
           pre: ({ children }) => {
             const child = Array.isArray(children) ? children[0] : children;
-            const cls = (child as { props?: { className?: string } })?.props?.className || "";
+            const cls =
+              (child as { props?: { className?: string } })?.props
+                ?.className || "";
             const lang = /language-([\w-]+)/.exec(cls)?.[1];
-            return <CodeFrame lang={lang} code={textOf(children).replace(/\n$/, "")}>{children}</CodeFrame>;
+
+            return (
+              <CodeFrame
+                lang={lang}
+                code={textOf(children).replace(/\n$/, "")}
+              >
+                {children}
+              </CodeFrame>
+            );
           },
-          code: ({ className, children, ...props }) => <code className={className || "rounded-md bg-muted px-1.5 py-0.5 font-mono text-[0.88em]"} {...props}>{children}</code>,
+          code: ({ className, children, ...props }) => (
+            <code
+              className={
+                className ||
+                "rounded-md bg-muted px-1.5 py-0.5 font-mono text-[0.88em]"
+              }
+              {...props}
+            >
+              {children}
+            </code>
+          ),
         }}
       >
         {normalizedContent}
       </ReactMarkdown>
     </div>
-  );
-});v>
   );
 });
