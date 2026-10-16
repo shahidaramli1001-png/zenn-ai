@@ -221,6 +221,9 @@ export function ChatView({ routeConversationId }: { routeConversationId?: string
 
   const empty = !loading && messages.length === 0;
   const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+  const lastUserMessage = [...messages]
+  .reverse()
+  .find((m) => m.role === "user");
 
   return (
     <div className="flex h-full flex-col">
@@ -281,6 +284,13 @@ export function ChatView({ routeConversationId }: { routeConversationId?: string
                     <LogoMark className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
+                    {m.id === lastAssistant?.id && (
+  <AutoCodeStatus
+    requestText={lastUserMessage?.content ?? ""}
+    content={m.content}
+    status={m.status}
+  />
+)}
                     {m.status === "streaming" && !m.content ? (
   <div className="flex items-center gap-2 rounded-xl border border-sky-500/30 bg-sky-500/5 px-3 py-3 text-sm text-muted-foreground">
     <Loader2 className="h-4 w-4 animate-spin text-sky-500" />
