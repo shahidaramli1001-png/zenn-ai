@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ArrowUp, Square, RotateCcw, AlertCircle, Lightbulb, Code2, FileText, Sparkle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Markdown, CopyButton } from "./Markdown";
+import { AutoCodeStatus } from "./AutoCodeStatus";
 import { LogoMark } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 
