@@ -25,8 +25,8 @@ export function getPlanConfig() {
 
 export function getProviderConfig() {
   const apiKey = process.env["AI_API_KEY"];
-  const baseUrl = (process.env["AI_BASE_URL"] || "https://api.openai.com/v1").replace(/\/+$/, "");
-  const model = process.env["AI_MODEL"] || "gpt-4o-mini";
+  const baseUrl = (process.env["AI_BASE_URL"] || "https://openrouter.ai/api/v1").replace(/\/+$/, "");
+  const model = process.env["AI_MODEL"] || "cognitivecomputations/dolphin-mistral-24b-venice-edition";
   // OpenAI's newest models require max_completion_tokens; most compatible APIs accept max_tokens.
   const maxTokensField = process.env["AI_MAX_TOKENS_FIELD"] === "max_tokens" ? "max_tokens" : "max_completion_tokens";
   const timeoutMs = int("AI_TIMEOUT_MS", 30000);
