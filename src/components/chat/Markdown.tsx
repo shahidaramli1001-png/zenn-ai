@@ -82,6 +82,7 @@ export function CodeFrame({
         </span>
         <CopyButton text={code} label="Copy code" />
       </div>
+
       <pre className="m-0 overflow-x-auto p-4 font-mono text-sm leading-relaxed text-code-foreground">
         {children}
       </pre>
@@ -94,21 +95,28 @@ const STATUS = {
     label: "Selesai",
     Icon: Check,
     color: "text-emerald-600 dark:text-emerald-400",
+    surface:
+      "border-emerald-500/40 bg-emerald-500/10 dark:bg-emerald-400/10",
   },
   IN_PROGRESS: {
     label: "Sedang berjalan",
     Icon: LoaderCircle,
-    color: "text-amber-600 dark:text-amber-400",
+    color: "text-amber-600 dark:text-amber-300",
+    surface:
+      "border-amber-500/40 bg-amber-500/10 dark:bg-amber-400/10",
   },
   ERROR: {
     label: "Ralat",
     Icon: CircleX,
     color: "text-red-600 dark:text-red-400",
+    surface:
+      "border-red-500/40 bg-red-500/10 dark:bg-red-400/10",
   },
   PENDING: {
     label: "Menunggu",
     Icon: Clock3,
     color: "text-muted-foreground",
+    surface: "border-border/70 bg-muted/40",
   },
 } as const;
 
@@ -123,24 +131,31 @@ function TaskStatus({
   const Icon = item.Icon;
 
   return (
-    <span className="inline-flex max-w-full items-start gap-2 align-baseline">
+    <div
+      className={`my-2 flex w-full items-start gap-3 rounded-xl border px-3.5 py-3 shadow-sm transition-colors ${item.surface}`}
+    >
       <Icon
         aria-label={item.label}
-        className={`mt-1 h-4 w-4 shrink-0 ${item.color} ${
+        className={`mt-0.5 h-4 w-4 shrink-0 ${item.color} ${
           status === "IN_PROGRESS" ? "animate-spin" : ""
         }`}
       />
-      <span className="min-w-0 break-words">{children}</span>
-    </span>
+
+      <div className="min-w-0 flex-1 break-words text-sm leading-6">
+        {children}
+      </div>
+    </div>
   );
 }
 
 /**
- * Normalize common status formats produced by the AI.
+ * Normalize status formats produced by the AI.
+ *
  * Examples:
  * DONEDONE - Database connected
  * ERRORERROR - API request failed
  * DONE - Database connected
+ * - [DONE] Database connected
  */
 function normalizeStatusLines(content: string): string {
   return content
@@ -186,7 +201,7 @@ function StatusListItem({
   const cleaned = fullText.slice(match[0].length);
 
   return (
-    <li className="my-1 list-none pl-0">
+    <li className="my-1 list-none p-0">
       <TaskStatus status={status}>{cleaned}</TaskStatus>
     </li>
   );
