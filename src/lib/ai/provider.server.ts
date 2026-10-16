@@ -1,7 +1,6 @@
 
 import { getProviderConfig } from "@/lib/config.server";
 
-// Supported chat message format.
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
   content: string;
@@ -29,25 +28,21 @@ export class ProviderError extends Error {
   }
 }
 
-/**
- * System instructions for ZennAI.
- * Status tags are rendered as cards by the Markdown UI.
- */
 export const SYSTEM_PROMPT = `
 You are ZennAI, a helpful, precise, friendly, and reliable AI assistant.
 
-LANGUAGE AND FORMATTING
-- Always reply in the same language as the user's latest message.
-- Use clear Markdown.
-- Use fenced code blocks with the correct language identifier.
-- Keep explanations clear, useful, and appropriate to the user's question.
+LANGUAGE AND STYLE
+- Reply in the same language as the user's latest message.
+- Use clear Markdown and correctly labelled code blocks.
+- Give useful, direct answers.
 - Do not force status cards into ordinary conversations.
 
-STATUS CARD FORMAT
-When task progress, coding, troubleshooting, or multi-step work benefits
-from visible progress cards, write each status as a separate Markdown list item.
+STATUS CARDS
+For coding, troubleshooting, research, planning, and multi-step tasks,
+use short Markdown list items as progress cards when useful.
+Each status must start at the beginning of its own list item.
 
-Use these exact status tags when appropriate:
+Supported status tags:
 [ANALYZING]
 [PLANNING]
 [SEARCHING]
@@ -60,6 +55,11 @@ Use these exact status tags when appropriate:
 [GENERATING]
 [REVIEWING]
 [TESTING]
+[EXECUTING]
+[VERIFYING]
+[DEPLOYING]
+[SUMMARIZING]
+[WAITING]
 [IN_PROGRESS]
 [PENDING]
 [DONE]
@@ -69,51 +69,40 @@ Use these exact status tags when appropriate:
 Example:
 - [ANALYZING] Memahami masalah yang dilaporkan.
 - [PLANNING] Menentukan langkah penyelesaian.
-- [CODING] Mengemas kini kod yang berkaitan.
+- [CODING] Mengemas kini kod berkaitan.
 - [TESTING] Menyemak perubahan.
-- [DONE] Perubahan selesai dan telah disahkan.
+- [DONE] Perubahan telah disahkan.
 
 STATUS RULES
-- Write the status tag at the beginning of each list item.
-- Use the user's language for the status description.
-- Keep status descriptions short and informative.
+- Use the user's language for status descriptions.
+- Keep descriptions short and informative.
 - Use only statuses relevant to the current task.
-- Do not generate a long list of fake progress updates.
-- Do not claim an action is happening unless it actually is.
-- Do not claim to have searched the web, read a file, changed code,
-  connected a database, run tests, or deployed an app unless that action
-  actually occurred.
-- Use [DONE] or [COMPLETED] only when completion is confirmed.
-- Use [ERROR] only for a confirmed failure.
-- Use [PENDING] for work that has not started or is awaiting verification.
+- Do not generate fake progress updates.
+- Do not claim to be performing an action unless it is actually happening.
+- Never claim to have searched, edited files, queried a database,
+  run tests, or deployed code unless that action really occurred.
+- Use [DONE] or [COMPLETED] only for confirmed successful results.
+- Use [ERROR] only for confirmed failures.
+- Use [PENDING] for work not started or awaiting verification.
 - Use [IN_PROGRESS] for work genuinely underway.
-- Use [TESTING] only when testing is actually being performed.
-- If a task cannot be verified, clearly say that it has not been verified.
-- Never expose private chain-of-thought or hidden reasoning.
-- Provide concise progress summaries, not private internal reasoning.
+- Use [TESTING] only when testing is actually taking place.
+- If a result cannot be verified, say so clearly.
+- Never reveal private chain-of-thought or hidden reasoning.
+- Status cards are short user-facing summaries, not internal reasoning.
+- Do not mark an action complete merely because you described it.
 
 GENERAL BEHAVIOUR
-- Explain errors and give practical next steps.
-- Distinguish confirmed facts from assumptions.
+- Explain errors and offer practical next steps.
+- Distinguish verified facts from assumptions.
 - Never invent test results, links, API responses, or completed actions.
-- For coding requests, provide complete and relevant code when requested.
-- Preserve existing project architecture unless a change is necessary.
+- Provide complete relevant code when requested.
+- Preserve the existing project architecture.
 `.trim();
 
-/**
- * Returns whether an AI provider API key is configured.
- */
 export function isProviderConfigured() {
   return !!getProviderConfig().apiKey;
 }
 
-/**
- * Opens an OpenAI-compatible Chat Completions stream.
- *
- * Compatible providers must support:
- * POST {baseUrl}/chat/completions
- * Authorization: Bearer <API key>
- */
 async function openStream(
   messages: ChatMessage[],
   maxOutputTokens: number,
@@ -130,12 +119,10 @@ async function openStream(
   }
 
   const controller = new AbortController();
-
   const onAbort = () => controller.abort();
+
   signal?.addEventListener("abort", onAbort);
 
-  // Timeout applies to receiving response headers.
-  // Once streaming starts, the client controls stopping.
   const timer = setTimeout(
     () => controller.abort(new Error("timeout")),
     cfg.timeoutMs,
@@ -198,7 +185,7 @@ async function openStream(
 
       detail = json?.error?.message ?? "";
     } catch {
-      // The provider may return a non-JSON error response.
+      // Ignore non-JSON error responses.
     }
 
     console.error(
@@ -252,10 +239,6 @@ async function openStream(
   };
 }
 
-/**
- * Streams text deltas from an OpenAI-compatible provider.
- * Also yields usage and finish events when available.
- */
 export async function* streamChat(
   messages: ChatMessage[],
   opts: {
@@ -263,18 +246,9 @@ export async function* streamChat(
     signal?: AbortSignal;
   },
 ): AsyncGenerator<
-  | {
-      type: "delta";
-      text: string;
-    }
-  | {
-      type: "usage";
-      usage: ProviderUsage;
-    }
-  | {
-      type: "finish";
-      reason: string | null;
-    }
+  | { type: "delta"; text: string }
+  | { type: "usage"; usage: ProviderUsage }
+  | { type: "finish"; reason: string | null }
 > {
   const { res, cleanup } = await openStream(
     messages,
@@ -301,30 +275,21 @@ export async function* streamChat(
     while (true) {
       const { done, value } = await reader.read();
 
-      if (done) {
-        break;
-      }
+      if (done) break;
 
-      buffer += decoder.decode(value, {
-        stream: true,
-      });
+      buffer += decoder.decode(value, { stream: true });
 
       let newlineIndex: number;
 
       while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
         const line = buffer.slice(0, newlineIndex).trim();
-
         buffer = buffer.slice(newlineIndex + 1);
 
-        if (!line.startsWith("data:")) {
-          continue;
-        }
+        if (!line.startsWith("data:")) continue;
 
         const data = line.slice(5).trim();
 
-        if (data === "[DONE]") {
-          return;
-        }
+        if (data === "[DONE]") return;
 
         try {
           const json = JSON.parse(data) as {
@@ -362,13 +327,12 @@ export async function* streamChat(
               type: "usage",
               usage: {
                 inputTokens: json.usage.prompt_tokens ?? null,
-                outputTokens:
-                  json.usage.completion_tokens ?? null,
+                outputTokens: json.usage.completion_tokens ?? null,
               },
             };
           }
         } catch {
-          // Ignore incomplete or non-JSON SSE messages.
+          // Ignore incomplete or invalid SSE messages.
         }
       }
     }
@@ -376,23 +340,13 @@ export async function* streamChat(
     cleanup();
 
     try {
-      await reader.cancel();
-    } catch {
-      // The stream may already be closed.
-    }
-
-    try {
       reader.releaseLock();
     } catch {
-      // The reader may already be released.
+      // Ignore reader cleanup errors.
     }
   }
 }
 
-/**
- * Rough token estimate for providers that do not report usage.
- * This is an estimate, not an exact tokenizer result.
- */
 export function estimateTokens(text: string) {
   return Math.ceil(text.length / 4);
 }
